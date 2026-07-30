@@ -24,8 +24,7 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "dotenv": "^17.4.2",
     "express": "^4.21.0",
-    "googleapis": "^173.0.0",
-    "serverless-http": "^3.2.0"
+    "googleapis": "^173.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
