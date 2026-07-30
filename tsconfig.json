@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "node"
   },
   "include": ["src/**/*", "api/**/*"],
   "exclude": ["node_modules", "build"]
