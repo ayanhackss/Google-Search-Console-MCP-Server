@@ -4,6 +4,7 @@
   "description": "Google Search Console MCP Server — VPS Edition",
   "scripts": {
     "build": "tsc",
+    "postinstall": "tsc",
     "dev": "ts-node src/server.ts",
     "start": "node build/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
