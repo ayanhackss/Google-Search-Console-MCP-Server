@@ -1,6 +1,6 @@
 import { getDb } from '../db/database';
 
-export async function generateAlerts(siteUrl: string) {
+export async function generateAlerts(userId: number, siteUrl: string) {
   const db = getDb();
   const alerts: any[] = [];
 
@@ -15,11 +15,11 @@ export async function generateAlerts(siteUrl: string) {
       JOIN pages p ON pk.page_id = p.id
       JOIN keywords k ON pk.keyword_id = k.id
       JOIN sites s ON p.site_id = s.id
-      WHERE s.site_url = ?
+      WHERE s.site_url = ? AND s.user_id = ?
       GROUP BY k.query
       HAVING page_count > 1 AND total_clicks > 10
     `,
-    args: [siteUrl],
+    args: [siteUrl, userId],
   });
 
   if (cannResult.rows.length > 0) {
@@ -40,11 +40,11 @@ export async function generateAlerts(siteUrl: string) {
       FROM page_keywords pk
       JOIN pages p ON pk.page_id = p.id
       JOIN sites s ON p.site_id = s.id
-      WHERE s.site_url = ?
+      WHERE s.site_url = ? AND s.user_id = ?
       GROUP BY p.url
       HAVING SUM(pk.clicks) = 0 AND total_impressions > 500
     `,
-    args: [siteUrl],
+    args: [siteUrl, userId],
   });
 
   if (zeroClickResult.rows.length > 0) {

@@ -1,6 +1,6 @@
 import { getDb } from '../db/database';
 
-export async function getSeoOpportunities(siteUrl: string, category: string = 'all', brandName?: string) {
+export async function getSeoOpportunities(userId: number, siteUrl: string, category: string = 'all', brandName?: string) {
   const db = getDb();
 
   let havingClause = '';
@@ -23,7 +23,7 @@ export async function getSeoOpportunities(siteUrl: string, category: string = 'a
       break;
   }
 
-  const args: any[] = [siteUrl];
+  const args: any[] = [siteUrl, userId];
   let brandFilter = '';
   if (brandName) {
     brandFilter = `AND k.query NOT LIKE '%' || ? || '%'`;
@@ -43,7 +43,7 @@ export async function getSeoOpportunities(siteUrl: string, category: string = 'a
       JOIN pages p ON pk.page_id = p.id
       JOIN keywords k ON pk.keyword_id = k.id
       JOIN sites s ON p.site_id = s.id
-      WHERE s.site_url = ? ${brandFilter}
+      WHERE s.site_url = ? AND s.user_id = ? ${brandFilter}
       GROUP BY k.query
       ${havingClause}
       ORDER BY total_impressions DESC

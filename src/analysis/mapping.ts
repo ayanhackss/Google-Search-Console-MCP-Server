@@ -1,6 +1,6 @@
 import { getDb } from '../db/database';
 
-export async function getPageKeywords(siteUrl: string, pageUrl: string) {
+export async function getPageKeywords(userId: number, siteUrl: string, pageUrl: string) {
   const db = getDb();
   const result = await db.execute({
     sql: `
@@ -14,16 +14,16 @@ export async function getPageKeywords(siteUrl: string, pageUrl: string) {
       JOIN pages p ON pk.page_id = p.id
       JOIN keywords k ON pk.keyword_id = k.id
       JOIN sites s ON p.site_id = s.id
-      WHERE s.site_url = ? AND p.url = ?
+      WHERE s.site_url = ? AND s.user_id = ? AND p.url = ?
       GROUP BY k.query
       ORDER BY total_clicks DESC, total_impressions DESC
     `,
-    args: [siteUrl, pageUrl],
+    args: [siteUrl, userId, pageUrl],
   });
   return result.rows;
 }
 
-export async function getKeywordPages(siteUrl: string, keyword: string) {
+export async function getKeywordPages(userId: number, siteUrl: string, keyword: string) {
   const db = getDb();
   const result = await db.execute({
     sql: `
@@ -37,11 +37,11 @@ export async function getKeywordPages(siteUrl: string, keyword: string) {
       JOIN pages p ON pk.page_id = p.id
       JOIN keywords k ON pk.keyword_id = k.id
       JOIN sites s ON p.site_id = s.id
-      WHERE s.site_url = ? AND k.query = ?
+      WHERE s.site_url = ? AND s.user_id = ? AND k.query = ?
       GROUP BY p.url
       ORDER BY total_clicks DESC, total_impressions DESC
     `,
-    args: [siteUrl, keyword],
+    args: [siteUrl, userId, keyword],
   });
 
   const pages = result.rows;

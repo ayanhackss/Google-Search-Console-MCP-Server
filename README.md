@@ -16,66 +16,52 @@ Once connected, your AI assistant will gain the following super-powers:
 
 ---
 
-## 🚀 How to Use It
+## 🚀 How to Install (One-Click Prompts)
 
-### Step 1: Authorize your Google Account
-Before your AI can read your data, you need to securely grant it access:
-1. Open your browser and go to: **[https://gscmcp.vercel.app/api/auth/login](https://gscmcp.vercel.app/api/auth/login)**
-2. Log in with the Google Account that has access to your Search Console properties.
-3. You will see a success message. You're ready to go!
+This MCP server supports **Native OAuth 2.1**. This means you do not need to manually configure API keys. You just add the URL to your IDE, and click "Authenticate"!
 
-*(Note: Your access tokens are stored securely in a private cloud database and are never exposed).*
+### Option A: Cursor IDE (Easiest)
+Copy and paste this exact prompt into Cursor's Composer or Chat to automatically install it:
 
----
+```text
+Please add a new MCP Server to my Cursor configuration with the following details:
+Name: Google-Search-Console
+Type: SSE
+URL: https://gscmcp.ayanhacks.in
 
-### Step 2: Connect your AI Assistant
+Once added, tell me to go to Cursor Settings -> MCP and click the "Authenticate" button to sign in with my Google account.
+```
 
-Depending on which AI tool you use, follow the instructions below:
+### Option B: Antigravity IDE / Claude Desktop (Stdio Bridge)
+For IDEs that use a standard `mcp_config.json` file (like Antigravity or Claude Desktop), you need to use the bridge method with an API key.
 
-#### Option A: Cursor IDE / Windsurf (Easiest)
-Modern AI IDEs support remote SSE endpoints natively.
-1. Open **Cursor Settings** (gear icon) -> **Features** -> **MCP**.
-2. Click **+ Add New MCP Server**.
-3. Set the Type to **SSE**.
-4. Set the Name to `Google-Search-Console`.
-5. Set the URL exactly to: `https://gscmcp.vercel.app/api/mcp`
-6. Click **Save**. 
+1. Go to **[https://gscmcp.ayanhacks.in](https://gscmcp.ayanhacks.in)**, click **Generate API Key**, and copy it.
+2. Click **Login with Google** to authorize your account.
+3. Give your AI assistant this exact prompt:
 
-You can now open Cursor's chat and say: *"Analyze the SEO opportunities for my website."*
+```text
+Please add a new MCP Server to my `mcp_config.json` with the following details:
+Name: google-search-console
+Command: npx
+Args: ["-y", "github:ayanhackss/Google-Search-Console-MCP-Server", "node", "bridge.js"]
+Env: 
+  MCP_URL: https://gscmcp.ayanhacks.in/api/mcp?apiKey=PASTE_MY_API_KEY_HERE
+```
+*(Remember to replace `PASTE_MY_API_KEY_HERE` with your actual API key before sending the prompt!)*
 
-#### Option B: Claude Desktop (Local Bridge)
-Claude Desktop currently only supports local processes. To connect it to this cloud server, you need to run a small "bridge" script locally.
-
-1. Clone this repository to your computer:
-   ```bash
-   git clone https://github.com/ayanhackss/Google-Search-Console-MCP-Server.git
-   cd Google-Search-Console-MCP-Server
-   npm install
-   ```
-2. Open your `claude_desktop_config.json` file.
-3. Add the following configuration, making sure to replace the path with the actual absolute path to the `bridge.ts` file on your computer:
-   ```json
-   {
-     "mcpServers": {
-       "google-search-console": {
-         "command": "npx",
-         "args": [
-           "ts-node",
-           "/absolute/path/to/Google-Search-Console-MCP-Server/bridge.ts"
-         ],
-         "env": {}
-       }
-     }
-   }
-   ```
-4. Restart Claude Desktop.
+### Option C: Manual API Key (Fallback)
+If your AI assistant doesn't support the fancy "Authenticate" button yet, you can still use it!
+1. Go to **[https://gscmcp.ayanhacks.in](https://gscmcp.ayanhacks.in)**
+2. Click "Generate API Key" and copy the key.
+3. Click "Login with Google" to authorize your Google Account.
+4. Add the server to your IDE using this URL: `https://gscmcp.ayanhacks.in/api/mcp?apiKey=YOUR_API_KEY`
 
 ---
 
 ## 🛠️ Troubleshooting
 
-- **Connection Drops:** This server is hosted on a serverless platform. If your AI complains that the `stream is not readable` or the connection was lost, **simply retry your prompt**. The AI will automatically reconnect.
-- **"No properties found":** Make sure you logged in (Step 1) with the exact Google Account that owns the properties in Google Search Console.
+- **"No properties found":** Make sure you logged in with the exact Google Account that owns the properties in Google Search Console.
+- **Connection Drops:** If your AI complains that the connection was lost, **simply retry your prompt**. The AI will automatically reconnect to the SSE stream.
 
 ---
 *Built with [Model Context Protocol](https://modelcontextprotocol.io)*
