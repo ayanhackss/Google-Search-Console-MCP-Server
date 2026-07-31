@@ -20,7 +20,7 @@ import { generateAlerts } from './analysis/alerts';
 
 /**
  * Creates and configures the MCP Server instance.
- * Exported as a factory so it can be used by Vercel, Netlify,
+ * Exported as a factory so it can be used by the VPS (Express)
  * or the local stdio runner.
  */
 export async function createMcpServer(): Promise<Server> {

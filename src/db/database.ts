@@ -76,7 +76,8 @@ export async function initDb(): Promise<void> {
       clicks INTEGER,
       impressions INTEGER,
       ctr REAL,
-      position REAL
+      position REAL,
+      PRIMARY KEY (date, page_id, keyword_id)
     );
 
     CREATE TABLE IF NOT EXISTS auth_state (
@@ -85,5 +86,11 @@ export async function initDb(): Promise<void> {
       access_token TEXT,
       expiry_date INTEGER
     );
+  `);
+
+  // Migration: add unique index for existing DBs that predate the PK fix
+  await db.execute(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_snapshots_unique
+    ON snapshots (date, page_id, keyword_id)
   `);
 }

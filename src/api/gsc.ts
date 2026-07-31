@@ -50,37 +50,51 @@ export async function syncProperty(siteUrl: string, startDate: string, endDate: 
   if (!siteRow) throw new Error(`Site ${siteUrl} not found. Run list_properties first.`);
   const siteId = siteRow.id;
 
-  for (const row of rows) {
-    const query = row.keys![0];
-    const pageUrl = row.keys![1];
-    const device = row.keys![2];
-    const country = row.keys![3];
+  // --- Fix: guard against missing keys, collect unique pages/keywords ---
+  const validRows = rows.filter(r => r.keys && r.keys.length >= 4);
 
-    // Upsert page
-    await db.execute({
-      sql: `INSERT INTO pages (site_id, url) VALUES (?, ?)
-            ON CONFLICT(site_id, url) DO NOTHING`,
-      args: [siteId, pageUrl],
-    });
-    const pageResult = await db.execute({
-      sql: 'SELECT id FROM pages WHERE site_id = ? AND url = ?',
-      args: [siteId, pageUrl],
-    });
-    const pageId = (pageResult.rows[0] as any).id;
+  const uniquePageUrls = [...new Set(validRows.map(r => r.keys![1]))];
+  const uniqueQueries  = [...new Set(validRows.map(r => r.keys![0]))];
 
-    // Upsert keyword
+  // Batch upsert pages
+  for (const url of uniquePageUrls) {
     await db.execute({
-      sql: `INSERT INTO keywords (query) VALUES (?)
-            ON CONFLICT(query) DO NOTHING`,
+      sql: `INSERT INTO pages (site_id, url) VALUES (?, ?) ON CONFLICT(site_id, url) DO NOTHING`,
+      args: [siteId, url],
+    });
+  }
+
+  // Batch upsert keywords
+  for (const query of uniqueQueries) {
+    await db.execute({
+      sql: `INSERT INTO keywords (query) VALUES (?) ON CONFLICT(query) DO NOTHING`,
       args: [query],
     });
-    const keywordResult = await db.execute({
-      sql: 'SELECT id FROM keywords WHERE query = ?',
-      args: [query],
-    });
-    const keywordId = (keywordResult.rows[0] as any).id;
+  }
 
-    // Upsert page_keyword
+  // Load all page IDs at once into a map
+  const pageRows = await db.execute({
+    sql: `SELECT id, url FROM pages WHERE site_id = ? AND url IN (${uniquePageUrls.map(() => '?').join(',')})`,
+    args: [siteId, ...uniquePageUrls],
+  });
+  const pageIdMap = new Map<string, number>();
+  for (const r of pageRows.rows as any[]) pageIdMap.set(r.url, r.id);
+
+  // Load all keyword IDs at once into a map
+  const kwRows = await db.execute({
+    sql: `SELECT id, query FROM keywords WHERE query IN (${uniqueQueries.map(() => '?').join(',')})`,
+    args: uniqueQueries,
+  });
+  const kwIdMap = new Map<string, number>();
+  for (const r of kwRows.rows as any[]) kwIdMap.set(r.query, r.id);
+
+  // Upsert page_keywords using the cached IDs (1 query per row, no sub-selects)
+  for (const row of validRows) {
+    const [query, pageUrl, device, country] = row.keys!;
+    const pageId = pageIdMap.get(pageUrl);
+    const keywordId = kwIdMap.get(query);
+    if (!pageId || !keywordId) continue;
+
     await db.execute({
       sql: `INSERT INTO page_keywords (page_id, keyword_id, clicks, impressions, ctr, position, device, country, search_type, date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web', ?)
@@ -93,7 +107,7 @@ export async function syncProperty(siteUrl: string, startDate: string, endDate: 
     });
   }
 
-  return { syncedRows: rows.length };
+  return { syncedRows: validRows.length };
 }
 
 export async function syncAllProperties(startDate: string, endDate: string) {

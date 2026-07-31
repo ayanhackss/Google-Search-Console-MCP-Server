@@ -3,13 +3,23 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { createMcpServer } from './index';
 import { getAuthUrl, submitAuthCode } from './auth/oauth';
 import dotenv from 'dotenv';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// Store SSE transports by session ID (in-memory, per Vercel instance)
+// Initialize MCP server once at startup and reuse across all connections
+let mcpServer: Server | null = null;
+async function getMcpServer(): Promise<Server> {
+  if (!mcpServer) {
+    mcpServer = await createMcpServer();
+  }
+  return mcpServer;
+}
+
+// Store SSE transports by session ID (in-memory, per server instance)
 const transports: Map<string, SSEServerTransport> = new Map();
 
 // GET /api/mcp — Opens SSE stream
@@ -22,7 +32,7 @@ app.get('/api/mcp', async (req, res) => {
     transports.delete(sessionId);
   });
 
-  const server = await createMcpServer();
+  const server = await getMcpServer();
   await server.connect(transport);
 });
 
@@ -72,6 +82,15 @@ app.get('/api/auth/callback', async (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
+});
+
+const PORT = parseInt(process.env.PORT || '3002', 10);
+
+app.listen(PORT, () => {
+  console.log(`✅ GSC MCP Server running on port ${PORT}`);
+  console.log(`🔗 MCP endpoint:   http://localhost:${PORT}/api/mcp`);
+  console.log(`🔑 Auth login:     http://localhost:${PORT}/api/auth/login`);
+  console.log(`❤️  Health check:   http://localhost:${PORT}/api/health`);
 });
 
 export default app;
