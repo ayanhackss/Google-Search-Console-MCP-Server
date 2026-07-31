@@ -3,8 +3,8 @@
   "version": "2.0.0",
   "description": "Google Search Console MCP Server — VPS Edition",
   "scripts": {
-    "build": "tsc",
-    "postinstall": "tsc",
+    "build": "node --max-old-space-size=512 node_modules/typescript/bin/tsc",
+    "postinstall": "node --max-old-space-size=512 node_modules/typescript/bin/tsc",
     "dev": "ts-node src/server.ts",
     "start": "node build/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
